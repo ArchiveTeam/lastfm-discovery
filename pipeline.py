@@ -33,7 +33,7 @@ if StrictVersion(seesaw.__version__) < StrictVersion("0.1.5"):
 # Update this each time you make a non-cosmetic change.
 # It will be added to the WARC files and reported to the tracker.
 
-VERSION = "20150704.01"
+VERSION = "20150704.02"
 USER_AGENT = 'ArchiveTeam'
 TRACKER_ID = 'lastfmdisco'
 TRACKER_HOST = 'tracker.archiveteam.org'
@@ -118,60 +118,15 @@ class CustomProcessArgs(object):
 
         if item_type == 'forum':
             # Expect something like forum:4562
-            suffixes = string.digits + string.
-            for suffix in suffixes:
-                url = 'http://www.last.fm/forum/_/{0}{1}'.format(item_value, suffix)
-                tries = 0
-                start_num = "1"
-                while True:
-                    if tries > 20:
-                        raise Exception('Too many retries, giving up.')
-                    try:
-                        max_num = extract_pages(lastfetch(url))
-                    except FetchError:
-                        print('Sleeping for some time...')
-                        sys.stdout.flush()
-                        time.sleep(15)
-                    else:
-                        if max_num:
-                            end_num = str(max_num)
-                            return ['python', 'discover.py', url, start_num, end_num, item_value, item_type,
-                                    "%(item_dir)s/%(warc_file_base)s.txt.gz" % item]
-                        break
-                    tries += 1
+            url = 'http://www.last.fm/forum/_/{0}'.format(item_value)
+            return ['python', 'discover.py', url, item_value, item_type,
+                    "%(item_dir)s/%(warc_file_base)s.txt.gz" % item]
         else:
             raise ValueError('unhandled item type: {0}'.format(item_type))
-
-def extract_pages(html):
-    # Return number of pages
-    match = re.search(r'class="pages">Page 1 of ([0-9]+)<\/span>', html)
-    if match:
-        print("return {0}".format(str(match.group(1))))
-        sys.stdout.flush()
-        return match.group(1)
-    else:
-	      print("return 1")
-        return "1"
 
 class FetchError(Exception):
     # Custom error class
     pass
-
-def lastfetch(url):
-    # Fetch page to extract number of pages with results
-    print('Fetch', url)
-    sys.stdout.flush()
-    html = requests.get(url, headers=DEFAULT_HEADERS)
-    print('Got', html.status_code, getattr(html, 'reason'))
-    sys.stdout.flush()
-    if html.status_code == 200:
-        if not html.text:
-            raise FetchError()
-        return html.text
-    if html.status_code == 404:
-        return html.text
-    else:
-        raise FetchError()
 
 def get_hash(filename):
     with open(filename, 'rb') as in_file:
